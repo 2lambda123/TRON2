@@ -1,11 +1,11 @@
 
 
 <p align="center">
-  <img src="https://github.com/MLSDev/TRON/raw/master/TRON.png" />
+  <img src="https://github.com/MLSDev/TRON/raw/main/TRON.png" />
 </p>
 
 ![CI](https://github.com/MLSDev/TRON/workflows/CI/badge.svg)
-[![codecov.io](https://codecov.io/github/MLSDev/TRON/coverage.svg?branch=master)](https://codecov.io/github/MLSDev/TRON?branch=master)
+[![codecov.io](https://codecov.io/github/MLSDev/TRON/coverage.svg?branch=main)](https://codecov.io/github/MLSDev/TRON?branch=main)
 ![CocoaPod platform](https://cocoapod-badges.herokuapp.com/p/TRON/badge.svg)
 ![CocoaPod version](https://cocoapod-badges.herokuapp.com/v/TRON/badge.svg)
 [![Swift Package Manager compatible](https://img.shields.io/badge/Swift%20Package%20Manager-compatible-brightgreen.svg)](https://github.com/apple/swift-package-manager)
@@ -25,7 +25,8 @@ TRON is a lightweight network abstraction layer, built on top of [Alamofire](htt
 - [x] Modular architecture
 - [x] Support for iOS/Mac OS X/tvOS/watchOS/Linux
 - [x] Support for CocoaPods/Swift Package Manager
-- [x] RxSwift extension
+- [x] [RxSwift](https://github.com/MLSDev/TRON#rxswift) / Combine extensions
+- [x] Support for [Swift Concurrency](https://github.com/MLSDev/TRON#swift-concurrency)
 - [x] [Complete documentation](https://mlsdev.github.io/TRON/)
 
 ## Overview
@@ -43,13 +44,13 @@ request.perform(withSuccess: { user in
 
 ## Requirements
 
-- Xcode 10 and higher
-- Swift 4 and higher
-- iOS 10 / macOS 10.12 / tvOS 10.0 / watchOS 3.0
+- Xcode 13 and higher
+- Swift 5.3 and higher
+- iOS 11 / macOS 10.13 / tvOS 11.0 / watchOS 4.0
 
 ## Installation
 
-### Swift Package Manager(requires Xcode 11)
+### Swift Package Manager
 
 * Add package into Project settings -> Swift Packages
 
@@ -75,8 +76,8 @@ pod 'TRON/RxSwift', '~> 5.3.0'
 
 ## Migration Guides
 
-- [TRON 5.0 Migration Guide](https://github.com/MLSDev/TRON/blob/master/Guides/5.0%20Migration%20Guide.md)
-- [TRON 4.0 Migration Guide](https://github.com/MLSDev/TRON/blob/master/Guides/4.0%20Migration%20Guide.md)
+- [TRON 5.0 Migration Guide](https://github.com/MLSDev/TRON/blob/main/Guides/5.0%20Migration%20Guide.md)
+- [TRON 4.0 Migration Guide](https://github.com/MLSDev/TRON/blob/main/Guides/4.0%20Migration%20Guide.md)
 
 ## Project status
 
@@ -217,12 +218,87 @@ request.perform(withSuccess: { status in
 
 You can also use `Alamofire.Empty` struct in cases where you don't care about actual response.
 
-Some concepts for response serialization, including array response serializer, are described in [Container Types Parsing document](https://github.com/MLSDev/TRON/blob/master/Docs/ContainerTypesParsing.md)
+Some concepts for response serialization, including array response serializer, are described in [Container Types Parsing document](https://github.com/MLSDev/TRON/blob/main/Docs/ContainerTypesParsing.md)
 
 It's possible to customize `JSONSerialization.ReadingOptions`, that are used by `SwiftyJSON.JSON` object while parsing data of the response:
 
 ```swift
 let request : APIRequest<String, APIError> = tron.swiftyJSON(readingOptions: .allowFragments).request("status")
+```
+
+## Swift Concurrency
+
+Sending requests using Swift Concurrency is done via a proxy object `RequestSender`(or `DownloadRequestSender` for download requests). Simple usage example:
+
+```swift
+let request : APIRequest<User, APIError> = tron.codable.request("/me")
+do {
+ let user = try await request.sender().value
+  // user variable contains User type
+} catch {
+  // Network request failed
+}
+```
+
+If you prefer to receive result, containing either successful Model, or ErrorModel, you can do that too:
+
+```swift
+let request : APIRequest<User, APIError> = tron.codable.request("/me")
+let result = await request.sender().result
+// result is Result<User,APIError>
+```
+
+There is also `response` async property, containing all request information, if you need it:
+
+```swift
+let request : APIRequest<User, APIError> = tron.codable.request("/me")
+let response = await request.sender().response
+// response: AFDataResponse<Model>
+```
+
+### Upload request
+
+For upload requests, it's useful to monitor upload progress, and show it to the user:
+
+```swift
+let request : APIRequest<User, APIError> = tron.codable.request("/me/profile_picture")
+  .upload("/post", fromFileAt: urlForResource("cat", withExtension: "jpg"))
+  .method(.post)  
+
+let sender = request.sender()
+Task {
+    for await progress in sender.uploadProgress {
+      // Update progress view, progress: Progress
+    }
+}
+let result = await sender.result
+```
+
+### Download request
+
+Similarly to upload requests, download requests have downloadProgress property implemented as async sequence:
+
+```swift
+Task {
+    for await progress in sender.downloadProgress {
+      // Update download view, progress: Progress
+    }
+}
+```
+
+If you only care about downloaded file URL, and not parsed data model, you can await responseURL property on request sender:
+
+```swift
+let destination = Alamofire.DownloadRequest.suggestedDownloadDestination()
+let request: DownloadAPIRequest<URL, APIError> = tron
+            .download("/download",
+                      to: destination,
+                      responseSerializer: FileURLPassthroughResponseSerializer())
+do {
+  let fileURL = try await request.sender().responseURL 
+} catch {
+  // Handle error
+}
 ```
 
 ## RxSwift
@@ -264,19 +340,19 @@ struct Users
     static let tron = TRON(baseURL: "https://api.myapp.com")
 
     static func create() -> APIRequest<User,APIError> {
-      return tron.codable.request("users").post()
+      tron.codable.request("users").post()
     }
 
     static func read(id: Int) -> APIRequest<User, APIError> {
-        return tron.codable.request("users/\(id)")
+        tron.codable.request("users/\(id)")
     }
 
     static func update(id: Int, parameters: [String:Any]) -> APIRequest<User, APIError> {
-      return tron.codable.request("users/\(id)").put().parameters(parameters)
+      tron.codable.request("users/\(id)").put().parameters(parameters)
     }
 
     static func delete(id: Int) -> APIRequest<User,APIError> {
-      return tron.codable.request("users/\(id)").delete()
+      tron.codable.request("users/\(id)").delete()
     }
 }
 ```
@@ -405,7 +481,7 @@ There are some very cool concepts for local plugins, some of them are described 
 
 We are dedicated to building best possible tool for interacting with RESTful web-services. However, we understand, that every tool has it's purpose, and therefore it's always useful to know, what other tools can be used to achieve the same goal.
 
-`TRON` was heavily inspired by [Moya framework](https://github.com/Moya/Moya) and [LevelUPSDK](https://github.com/TheLevelUp/levelup-sdk-ios/blob/master/Source/API/Client/LUAPIClient.h)
+`TRON` was heavily inspired by [Moya framework](https://github.com/Moya/Moya) and LevelUPSDK, which is no longer available in open-source.
 
 ## License
 

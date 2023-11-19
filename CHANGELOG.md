@@ -3,6 +3,50 @@ All notable changes to this project will be documented in this file.
 
 # Next
 
+## [5.5.0-beta.1](https://github.com/MLSDev/TRON/releases/tag/5.5.0-beta.1)
+
+### *Introducing support for Swift Concurrency*
+
+```swift
+let request: APIRequest<Int,APIError> = tron.codable
+    .request("status/200")
+
+let result = try await request.sender().value
+```
+
+Swift Concurrency methods require Swift 5.5 / Xcode 13.2 / iOS 13 / tvOS 13 / macOS 10.15 / watchOS 6.
+
+Read more usage examples in [README](https://github.com/MLSDev/TRON#swift-concurrency)
+
+### Added
+
+* `download(_:to:)` and `download(_:to:resumingFrom:)` methods that create `DownloadAPIRequest` with <URL, ErrorModel> generic constraints to simplify requests creation, where you need only URL from resulting operation.
+* Structured Concurrency support for Swift 5.5 and higher: `RequestSender`, `DownloadRequestSender` types.
+
+### Fixed
+
+* Issue, that could lead to sending network request with api stubs enabled, but Session.startRequestsImmediately property was set to false.
+
+### Breaking
+
+* New deployment targets: iOS 11 / tvOS 11 / macOS 10.13 / watchOS 4 / Xcode 13. OS deployment targets now match minimum deployment targets, supported by Xcode 14.
+
+## [5.4.1](https://github.com/MLSDev/TRON/releases/tag/5.4.1)
+
+### Changed
+
+* Improve Combine extensions to work better with stubs, that return synchronously.
+
+### Fixed
+
+* Swift 5.4 warnings
+
+## [5.4.0](https://github.com/MLSDev/TRON/releases/tag/5.4.0)
+
+### Changed
+
+* RxSwift dependency bumped to 6.0 and higher
+
 ## [5.3.0](https://github.com/MLSDev/TRON/releases/tag/5.3.0)
 
 ### Added
@@ -124,7 +168,7 @@ func deleteSession() -> APIRequest<Empty, UnknownError> {
 }
 ```
 
-Read more about other DSL improvements in [5.0 Migration Guide](https://github.com/MLSDev/TRON/blob/master/Docs/5.0%20Migration%20Guide.md)
+Read more about other DSL improvements in [5.0 Migration Guide](https://github.com/MLSDev/TRON/blob/main/Docs/5.0%20Migration%20Guide.md)
 
 ### Changed
 
@@ -246,7 +290,7 @@ let request = tron.swiftyJSON(readingOptions: .allowFragments).request("path")
 
 ## [4.0.0-beta.1](https://github.com/MLSDev/TRON/releases/tag/4.0.0-beta.1)
 
-**This is major release, containing breaking API changes, please read [TRON 4.0 Migration Guide](https://github.com/MLSDev/TRON/blob/master/Docs/4.0%20Migration%20Guide.md)**
+**This is major release, containing breaking API changes, please read [TRON 4.0 Migration Guide](https://github.com/MLSDev/TRON/blob/main/Docs/4.0%20Migration%20Guide.md)**
 
 * Implemented support for `Codable` protocol.
 * `APIError` now takes it's localizedDescription from underlying `errorModel` if that model is `LocalizedError`, and from `error.localizedDescription` if not.
@@ -508,7 +552,7 @@ Add support for any custom mapper to be used with TRON. Defaulting to `SwiftyJSO
 
 Examples:
 
-[Argo](https://github.com/MLSDev/TRON/blob/master/Custom%20mappers/Argo.playground/Contents.swift), [ObjectMapper](https://github.com/MLSDev/TRON/blob/support_custom_mappers/Custom%20mappers/ObjectMapper.playground/Contents.swift)
+[Argo](https://github.com/MLSDev/TRON/blob/main/Custom%20mappers/Argo.playground/Contents.swift), [ObjectMapper](https://github.com/MLSDev/TRON/blob/support_custom_mappers/Custom%20mappers/ObjectMapper.playground/Contents.swift)
 
 ### Limitations
 

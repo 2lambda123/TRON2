@@ -1,14 +1,14 @@
-// swift-tools-version:5.0
+// swift-tools-version:5.3
 
 import PackageDescription
 
 let package = Package(
     name: "TRON",
     platforms: [
-        .iOS(.v10),
-        .tvOS(.v10),
-        .macOS(.v10_12),
-        .watchOS(.v3)
+        .iOS(.v11),
+        .tvOS(.v11),
+        .macOS(.v10_13),
+        .watchOS(.v4)
     ],
     products: [
         .library(name: "TRON", targets: ["TRON"]),
@@ -18,7 +18,7 @@ let package = Package(
     dependencies: [
         .package(url: "https://github.com/Alamofire/Alamofire.git", .upToNextMajor(from: "5.0.0")),
         .package(url: "https://github.com/SwiftyJSON/SwiftyJSON.git", .upToNextMajor(from: ("5.0.0"))),
-        .package(url: "https://github.com/ReactiveX/RxSwift.git", .upToNextMajor(from: "5.1.0"))
+        .package(url: "https://github.com/ReactiveX/RxSwift.git", .upToNextMajor(from: "6.0.0"))
     ],
     targets: [
          .target(
